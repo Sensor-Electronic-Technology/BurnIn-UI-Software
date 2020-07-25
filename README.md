@@ -1,18 +1,41 @@
 # Burn-In-Sofware-Suite
 
-GUI Interface and control hardware for wafer burn-in.  Stresses up to 3 wafers at per burn-in station at a set current and controlled temperature. 
+GUI Interface and control hardware/firmware designed for semconductor burn-in(quick stress test).  Stresses up to 3 items at a set current and controlled temperature. 
 
 Hardware Components:
 * Computer: Raspberry pi 4 2gb version
 * Station Controller: Arduino ATMega2560
+* Stations: Competly custom. In general heating pads, temp sensors, current drivers, etc
+  
 
 Burn-In Interface:
-Interfaces with burn-in stations. options to start,pause,test voltage, turn on heaters,etc.  
+* Interfaces with burn-in stations.  Displays voltage, pad temperatures, test times, and controller responses.
 
 
 BurnInFirmware:
-performs requested actions from burn-in interface.  once test is started will run autonomously until stress time is met.
+* In general waits for interface to send start command then runs test autonomously.
+
+Commands:
+* Start: 'S', Start test for specified time
+* Reset: 'RR' Resets controller
+* Switch Current: 'C', Toggles drive current if specific stations has switching enables
+* Pause: 'P', pauses and un-pauses test
+* Toggle Heating: 'H', starts heating copper plate to desired temperature
+* Update Settigns:'UXXXXXX', Updates EEPROM with designates settings
+
 
 Images Bof hardware below:
 
 Computers:
+
+![Alt Text](https://drive.google.com/uc?export=view&id=1yNvc7ysCoZdkcSIgdfUg6DGberSTTMQe)
+
+Inside Burn-in Station:
+
+![Alt Text](https://drive.google.com/uc?export=view&id=1yZDV98d_3FQboH2jqW3ySjqN3xS40JXA)
+
+
+All Stations:
+
+![Alt Text](https://drive.google.com/uc?export=view&id=1Dee1hDZKWdVWZ_a8W_dhX4WP5uc4MGdj)
+
