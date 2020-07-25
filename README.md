@@ -17,9 +17,9 @@ BurnInFirmware:
 
 Commands:
 * Start: 'S', Start test for specified time
-* Reset: 'RR' Resets controller
-* Switch Current: 'C', Toggles drive current if specific stations has switching enables
-* Pause: 'P', pauses and un-pauses test
+* Reset: 'RR', Resets controller
+* Switch Current: 'C', Toggles drive current if specific station switching is enabled
+* Pause: 'P', pauses and continues test
 * Toggle Heating: 'H', starts heating copper plate to desired temperature
 * Update Settigns:'UXXXXXX', Updates EEPROM with designates settings
 
