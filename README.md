@@ -10,6 +10,7 @@ Hardware Components:
 
 Burn-In Interface:
 * Interfaces with burn-in stations.  Displays voltage, pad temperatures, test times, and controller responses.
+* Eventially plan to add modbus functions.
 
 
 BurnInFirmware:
