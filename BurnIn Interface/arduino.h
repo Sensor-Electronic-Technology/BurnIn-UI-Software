@@ -29,6 +29,7 @@ class Arduino : public QObject
 		void sendCommand(SerialCommand command);
 		void sendFirmwareUpdate(const QByteArray &settings);
 		void serialConnect();
+
 	private:
 		void processLine(const QByteArray &buffer);
 		static const qint16 arduinoVendorId1=9025;

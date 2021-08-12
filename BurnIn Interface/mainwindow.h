@@ -42,10 +42,11 @@ class MainWindow : public QMainWindow
 
 		void updateUI(const ControlValues &data);
 		void recieveCriticalError(const QString &errorMessage);
+		void recieveFileError(const QString &errorMessage);
 		void recieveComMessage(const QString &comMessage);
 		void recievePortName(const QString &portName);
 		void updateDeviceSettings(const ApplicationSettings &settings);
-		void transitionState(AppState newState);
+		void transitionState(AppState newState,const ControlValues &data);
 
 
 	private:

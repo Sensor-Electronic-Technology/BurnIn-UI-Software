@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),ui(new Ui::MainWin
 	connect(this->arduino,&Arduino::dataUpdate,this,&MainWindow::updateUI);
 	connect(this->arduino,&Arduino::comUpdate,this,&MainWindow::recieveComMessage);
 	connect(this->arduino,&Arduino::portNameUpdate,this,&MainWindow::recievePortName);
+	connect(this->logger,&Logger::publishFileError,this,&MainWindow::recieveFileError);
 	connect(this->ui->actionOpen_Settings,&QAction::triggered,this->settingDialog,&ConfigSettingDialog::show);
 	connect(this->settingDialog,&ConfigSettingDialog::settingsUpdate,this,&MainWindow::updateDeviceSettings);
 	emit this->ui->statusDisplay->setText("Idle");
@@ -60,10 +61,7 @@ void MainWindow::updateUI(const ControlValues &data){
 	emit this->ui->temp1Displa->display(QString::number(data.t1,'f',1));
 	emit this->ui->temp2_displa->display(QString::number(data.t2,'f',1));
 	emit this->ui->temp3_displa->display(QString::number(data.t3,'f',1));
-	emit this->logger->recieveData(data.logtext);
-	//emit this->ui->heating1indicator->setChecked(data.heating1);
-	//emit this->ui->heating2indicator->setChecked(data.heating2);
-	//emit this->ui->heating3indicator->setChecked(data.heating3);
+
 	this->indicators[0]->setState(data.heating1);
 	this->indicators[1]->setState(data.heating2);
 	this->indicators[2]->setState(data.heating3);
@@ -77,7 +75,8 @@ void MainWindow::updateUI(const ControlValues &data){
 	}else if(!data.running && !data.paused){
 		newState=AppState::IDLE;
 	}
-	emit this->transitionState(newState);
+
+	emit this->transitionState(newState,data);
 }
 
 void MainWindow::recieveCriticalError(const QString &errorMessage){
@@ -85,6 +84,11 @@ void MainWindow::recieveCriticalError(const QString &errorMessage){
 	msgBox.setText(errorMessage);
 	msgBox.setWindowTitle("Critical Error");
 	msgBox.exec();
+}
+
+void MainWindow::recieveFileError(const QString &errorMessage){
+	this->ui->comMessages->append(QDateTime::currentDateTime().toString()+":"+errorMessage);
+	this->ui->comMessages->verticalScrollBar()->setValue(this->ui->comMessages->verticalScrollBar()->maximum());
 }
 
 void MainWindow::recieveComMessage(const QString &comMessage){
@@ -148,21 +152,17 @@ void MainWindow::on_resetDeviceB_clicked(){
 			this->appState=AppState::IDLE;
 			emit this->ui->startB->setText("Start Burn-in");
 			emit this->ui->statusDisplay->setText("Idle");
-			emit this->logger->stopLogging();
 			emit this->arduino->sendCommand(SerialCommand::RESET);
 		}
 	}else{
 		this->appState=AppState::IDLE;
 		emit this->ui->startB->setText("Start Burn-in");
 		emit this->ui->statusDisplay->setText("Idle");
-		if(this->logger->isRunning()){
-			this->logger->stopLogging();
-		}
 		emit this->arduino->sendCommand(SerialCommand::RESET);
 	}
 }
 
-void MainWindow::transitionState(AppState newState){
+void MainWindow::transitionState(AppState newState,const ControlValues &data){
 	if(this->appState!=newState){
 		switch(this->appState){
 			case AppState::IDLE:{
@@ -173,15 +173,12 @@ void MainWindow::transitionState(AppState newState){
 					if(filename.isEmpty()){
 						filename=QDateTime::currentDateTime().toString();
 					}
-					emit this->logger->startLogging(this->stationId+"_"+filename);
+					emit this->logger->InitLogger(this->stationId+"_"+filename);
 					this->appState=newState;
 				}else if(newState==AppState::PAUSED){
 					this->appState=newState;
 					emit this->ui->startB->setText("Continue");
 					emit this->ui->statusDisplay->setText("Paused");
-					if(this->logger->isRunning()){
-						emit this->logger->pauseLogging();
-					}
 				}
 				break;
 			}
@@ -190,12 +187,10 @@ void MainWindow::transitionState(AppState newState){
 					this->appState=newState;
 					emit this->ui->startB->setText("Continue");
 					emit this->ui->statusDisplay->setText("Paused");
-					emit this->logger->pauseLogging();
 				}else if(newState==AppState::IDLE){
 					this->appState=newState;
 					emit this->ui->statusDisplay->setText("Idle");
 					emit this->ui->startB->setText("Start Burn-In");
-					emit this->logger->stopLogging();
 				}
 				break;
 			}
@@ -204,17 +199,17 @@ void MainWindow::transitionState(AppState newState){
 					this->appState=newState;
 					emit this->ui->statusDisplay->setText("Running");
 					emit this->ui->startB->setText("Pause");
-					emit this->logger->continueLogging();
 				}else if(newState==AppState::IDLE){
 					this->appState=newState;
 					emit this->ui->statusDisplay->setText("Idle");
 					emit this->ui->startB->setText("Start Burn-In");
-					if(this->logger->isRunning()){
-						emit this->logger->stopLogging();
-					}
 				}
 				break;
 			}
+		}
+	}else{
+		if(appState==AppState::RUNNING){
+			emit this->logger->writeOutData(data.logtext);
 		}
 	}
 }
