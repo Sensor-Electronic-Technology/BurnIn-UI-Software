@@ -74,21 +74,16 @@ struct ControlValues{
 };
 
 struct ApplicationSettings{
-	QString id,ipAddress;
+	QString id;
 	bool switchingEnabled;
 	QString current2;
-	int analogVersion;
 	int setTemperature;
-	int voltageVersion;
 
 	ApplicationSettings(){
 		this->id="1";
 		this->switchingEnabled=false;
 		this->current2="120";
-		this->ipAddress="0.0.0.0";
 		this->setTemperature=85;
-		this->analogVersion=1;
-		this->voltageVersion=1;
 	}
 };
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>323</width>
-    <height>416</height>
+    <width>296</width>
+    <height>293</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,11 +16,23 @@
   <widget class="QDialogButtonBox" name="settingsButtons">
    <property name="geometry">
     <rect>
-     <x>50</x>
-     <y>330</y>
-     <width>181</width>
+     <x>30</x>
+     <y>220</y>
+     <width>241</width>
      <height>71</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -28,12 +40,15 @@
    <property name="standardButtons">
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
    </property>
+   <property name="centerButtons">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QCheckBox" name="switchEnabledInput">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>130</y>
+     <x>90</x>
+     <y>110</y>
      <width>131</width>
      <height>28</height>
     </rect>
@@ -50,8 +65,8 @@
   <widget class="QComboBox" name="currentSelect2">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>210</y>
+     <x>20</x>
+     <y>180</y>
      <width>91</width>
      <height>30</height>
     </rect>
@@ -60,8 +75,8 @@
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>180</y>
+     <x>30</x>
+     <y>150</y>
      <width>68</width>
      <height>22</height>
     </rect>
@@ -86,9 +101,9 @@
   <widget class="QLineEdit" name="stationIdInput">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>50</x>
      <y>70</y>
-     <width>113</width>
+     <width>211</width>
      <height>30</height>
     </rect>
    </property>
@@ -96,7 +111,7 @@
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>50</x>
+     <x>120</x>
      <y>40</y>
      <width>68</width>
      <height>22</height>
@@ -106,66 +121,11 @@
     <string>Station ID</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="ipAddressInput">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>70</y>
-     <width>113</width>
-     <height>30</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>190</x>
-     <y>40</y>
-     <width>81</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Ip Address</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_6">
-   <property name="geometry">
-    <rect>
-     <x>180</x>
-     <y>110</y>
-     <width>81</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Analog Ver</string>
-   </property>
-  </widget>
-  <widget class="QSpinBox" name="analogVersionInput">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>140</y>
-     <width>111</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
-   <property name="minimum">
-    <number>1</number>
-   </property>
-   <property name="maximum">
-    <number>2</number>
-   </property>
-  </widget>
   <widget class="QSpinBox" name="setTemperatureInput">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>210</y>
+     <x>160</x>
+     <y>180</y>
      <width>111</width>
      <height>31</height>
     </rect>
@@ -183,46 +143,14 @@
   <widget class="QLabel" name="label_7">
    <property name="geometry">
     <rect>
-     <x>160</x>
-     <y>180</y>
+     <x>150</x>
+     <y>150</y>
      <width>121</width>
      <height>22</height>
     </rect>
    </property>
    <property name="text">
     <string>Set Temperature</string>
-   </property>
-  </widget>
-  <widget class="QSpinBox" name="voltageVersionInput">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>290</y>
-     <width>111</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
-   <property name="minimum">
-    <number>1</number>
-   </property>
-   <property name="maximum">
-    <number>2</number>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_8">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>260</y>
-     <width>111</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Voltage Version</string>
    </property>
   </widget>
  </widget>

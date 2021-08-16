@@ -8,15 +8,7 @@ Logger::Logger(QObject *parent):QObject(parent){
 }
 
 Logger::~Logger(){
-	/*if(this->file!=nullptr){
-		if(this->file->isOpen()){
-			this->file->close();
-		}
-		delete this->file;
-	}
-	if(this->logTimer!=nullptr){
-		delete this->logTimer;
-	}*/
+
 }
 
 void Logger::InitLogger(const QString& filename){

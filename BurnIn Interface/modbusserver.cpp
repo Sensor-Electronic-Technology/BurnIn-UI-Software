@@ -5,7 +5,7 @@ ModbusServer::ModbusServer(QObject *parent) : QObject(parent)
 
 }
 
-/*void ModbusServer::setupDeviceData(const ControlValues &data,const AppState &appState){
+void ModbusServer::setupDeviceData(const ControlValues &data,const AppState &appState){
 	if(!this->modbusDevice)
 		return;
 
@@ -26,20 +26,11 @@ ModbusServer::ModbusServer(QObject *parent) : QObject(parent)
 		this->modbusDevice->setData(QModbusDataUnit::InputRegisters,i,static_cast<quint16>(value));
 		i++;
 	}
-
-	std::vector<uint16_t> logTextWords(data.logtext.begin(), data.logtext.end());
-	for(auto value:logTextWords){
-		this->modbusDevice->setData(QModbusDataUnit::InputRegisters,i,static_cast<quint16>(value));
-		i++;
-	}
-
-	//can I map to pointers?
-
 	this->modbusDevice->setData(QModbusDataUnit::Coils,0,appState);
 	this->modbusDevice->setData(QModbusDataUnit::Coils,1,data.heating1);
 	this->modbusDevice->setData(QModbusDataUnit::Coils,2,data.heating2);
 	this->modbusDevice->setData(QModbusDataUnit::Coils,3,data.heating3);
 
 
-}*/
+}
 

@@ -20,11 +20,11 @@ class ModbusServer : public QObject
 	public slots:
 		//void updateData(const ControlValues &data,const AppState &appState);
 	private:
-		/*void setupDeviceData(const ControlValues &data,const AppState &appState);
+		void setupDeviceData(const ControlValues &data,const AppState &appState);
 		QModbusServer *modbusDevice;
 		vector<quint16> holdingRegisters;
 		vector<quint16> inputRegisters;
-		vector<bool>    coils;*/
+		vector<bool>    coils;
 
 };
 

@@ -31,8 +31,6 @@ class ConfigSettingDialog : public QDialog
 		Ui::ConfigSettingDialog *ui;
 		QString settingsFile;
 		ApplicationSettings appSettings;
-
-
 };
 
 #endif // CONFIGSETTINGDIALOG_H
