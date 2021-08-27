@@ -221,11 +221,9 @@ void MainWindow::updateDeviceSettings(const ApplicationSettings &settings){
 		this->stationId="Station"+settings.id;
 		int enabled=(int)settings.switchingEnabled;
 		stream<<"U"<<QString::number(enabled);
-		stream<<QString::number(settings.analogVersion);
-		stream<<QString::number(settings.voltageVersion);
 		QString current;
 		if(settings.current2=="none"){
-			stream<<"000";
+			stream<<"120";
 		}else{
 			stream<<settings.current2;
 		}

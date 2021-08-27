@@ -6,7 +6,7 @@ ModbusServer::ModbusServer(QObject *parent) : QObject(parent)
 }
 
 void ModbusServer::setupDeviceData(const ControlValues &data,const AppState &appState){
-	if(!this->modbusDevice)
+/*	if(!this->modbusDevice)
 		return;
 
 	this->modbusDevice->setData(QModbusDataUnit::InputRegisters,0,static_cast<quint16>(data.v11*100));
@@ -29,7 +29,7 @@ void ModbusServer::setupDeviceData(const ControlValues &data,const AppState &app
 	this->modbusDevice->setData(QModbusDataUnit::Coils,0,appState);
 	this->modbusDevice->setData(QModbusDataUnit::Coils,1,data.heating1);
 	this->modbusDevice->setData(QModbusDataUnit::Coils,2,data.heating2);
-	this->modbusDevice->setData(QModbusDataUnit::Coils,3,data.heating3);
+	this->modbusDevice->setData(QModbusDataUnit::Coils,3,data.heating3)*/;
 
 
 }
