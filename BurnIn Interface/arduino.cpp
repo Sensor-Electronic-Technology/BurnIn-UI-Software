@@ -118,7 +118,7 @@ void Arduino::processLine(const QByteArray &buffer){
 					auto openB=string .indexOf('{');
 					auto closeB=string.indexOf('}');
 					auto com=string.mid(openB+1,closeB-(openB+1));
-					emit this->comUpdate(QDateTime::currentDateTime().toString()+":"+com);
+					emit this->comUpdate(com);
 					break;
 				}
 				default:{
