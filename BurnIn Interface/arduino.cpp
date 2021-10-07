@@ -140,6 +140,14 @@ void Arduino::processLine(const QByteArray &buffer){
 	controlData.t1=realArray[6];
 	controlData.t2=realArray[7];
 	controlData.t3=realArray[8];
+
+	controlData.i11=realArray[12];
+	controlData.i12=realArray[13];
+	controlData.i21=realArray[14];
+	controlData.i22=realArray[15];
+	controlData.i31=realArray[16];
+	controlData.i32=realArray[17];
+
 	controlData.currentSP=realArray[11];
 	controlData.temperatureSP=realArray[10];
 	int totalSeconds=(int)this->realArray[9];
@@ -183,6 +191,11 @@ void Arduino::processLine(const QByteArray &buffer){
 	stream<<controlData.elapsedTime<<","<<controlData.v11<<","<<controlData.v12<<",";
 	stream<<controlData.v21<<","<<controlData.v22<<",";
 	stream<<controlData.v31<<","<<controlData.v32<<",";
+
+	stream<<controlData.i11<<","<<controlData.i12<<",";
+	stream<<controlData.i21<<","<<controlData.i22<<",";
+	stream<<controlData.i31<<","<<controlData.i32<<",";
+
 	stream<<controlData.t1<<","<<controlData.t2<<","<<controlData.t3<<",";
 	stream<<controlData.currentSP;
 	controlData.logtext=data;

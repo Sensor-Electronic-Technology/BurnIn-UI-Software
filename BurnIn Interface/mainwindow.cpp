@@ -30,6 +30,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),ui(new Ui::MainWin
 	connect(this->logger,&Logger::publishFileError,this,&MainWindow::recieveFileError);
 	connect(this->ui->actionOpen_Settings,&QAction::triggered,this->settingDialog,&ConfigSettingDialog::show);
 	connect(this->settingDialog,&ConfigSettingDialog::settingsUpdate,this,&MainWindow::updateDeviceSettings);
+	//connect(this->ui->comMessages,)
+
 	emit this->ui->statusDisplay->setText("Idle");
 	QString dataLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
 	qDebug()<<dataLocation;
@@ -56,6 +58,14 @@ void MainWindow::updateUI(const ControlValues &data){
 	emit this->ui->v22_display->display(QString::number(data.v22,'f',1));
 	emit this->ui->v31_display->display(QString::number(data.v31,'f',1));
 	emit this->ui->v32_display->display(QString::number(data.v32,'f',1));
+
+	emit this->ui->i11_display->display(QString::number(data.i11,'f',1));
+	emit this->ui->i12_display->display(QString::number(data.i12,'f',1));
+	emit this->ui->i21_display->display(QString::number(data.i21,'f',1));
+	emit this->ui->i22_display->display(QString::number(data.i22,'f',1));
+	emit this->ui->i31_display->display(QString::number(data.i31,'f',1));
+	emit this->ui->i32_display->display(QString::number(data.i32,'f',1));
+
 	emit this->ui->currentToggle->setText(QString::number(data.currentSP));
 	emit this->ui->tempToggle->setText(QString::number(data.temperatureSP));
 	emit this->ui->temp1Displa->display(QString::number(data.t1,'f',1));

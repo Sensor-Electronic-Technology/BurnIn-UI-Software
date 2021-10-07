@@ -25,6 +25,7 @@ enum SerialCommand{
 
 struct ControlValues{
 	double v11,v12,v21,v22,v31,v32,t1,t2,t3;
+	double i11,i12,i21,i22,i31,i32;
 	bool heating1,heating2,heating3,running,paused;
 	double currentSP,temperatureSP;
 	QString elapsedTime;
@@ -37,6 +38,12 @@ struct ControlValues{
 		this->v22=0;
 		this->v31=0;
 		this->v32=0;
+		this->i11=0;
+		this->i12=0;
+		this->i21=0;
+		this->i22=0;
+		this->i31=0;
+		this->i32=0;
 		this->t1=0;
 		this->t2=0;
 		this->t3=0;
@@ -58,6 +65,12 @@ struct ControlValues{
 		this->v22=rhs.v22;
 		this->v31=rhs.v31;
 		this->v32=rhs.v32;
+		this->i11=rhs.i11;
+		this->i12=rhs.i12;
+		this->i21=rhs.i21;
+		this->i22=rhs.i22;
+		this->i31=rhs.i31;
+		this->i32=rhs.i32;
 		this->t1=rhs.t1;
 		this->t2=rhs.t2;
 		this->t3=rhs.t3;
