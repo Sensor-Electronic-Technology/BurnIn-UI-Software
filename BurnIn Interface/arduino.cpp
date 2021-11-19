@@ -1,8 +1,6 @@
 #include "arduino.h"
 #include <QDebug>
 
-
-
 Arduino::Arduino(QObject *parent) : QObject(parent){
 	this->connected=false;
 	this->readEnabled=false;
@@ -29,10 +27,11 @@ bool Arduino::isConnected(){
 
 bool Arduino::FindArduinoSerialPort(){
 	bool arduinoFound=true;
-	//this->arduino->setPortName("arduino_1");
 	foreach(const QSerialPortInfo &info,QSerialPortInfo::availablePorts()){
 		qDebug()<<info.vendorIdentifier();
-		if(info.vendorIdentifier()==this->arduinoVendorId1 || info.vendorIdentifier()==this->arduinoVendorId2){
+        if(info.vendorIdentifier()==this->arduinoVendorId1
+                || info.vendorIdentifier()==this->arduinoVendorId2){
+
 				this->arduino->setPortName(info.portName());
 				qDebug()<<info.manufacturer();
 				arduinoFound=true;
@@ -73,7 +72,7 @@ void Arduino::sendCommand(SerialCommand command){
 			}
 		}
 		this->arduino->write(cmd.toUtf8());
-		if(!this->arduino->waitForBytesWritten(3000)){
+        if(!this->arduino->waitForBytesWritten(5000)){
 			emit this->criticalError("Error: Timeout while sending "+cmd+" command");
 		}
 	}
@@ -150,10 +149,10 @@ void Arduino::processLine(const QByteArray &buffer){
 
 	controlData.currentSP=realArray[11];
 	controlData.temperatureSP=realArray[10];
-	int totalSeconds=(int)this->realArray[9];
-	int hours=totalSeconds/3600;
-	int minutes=(totalSeconds/60) %60;
-	int seconds=totalSeconds % 60;
+    controlData.elapsed=long(this->realArray[9]);
+    int hours=controlData.elapsed/3600;
+    int minutes=(controlData.elapsed/60) %60;
+    int seconds=controlData.elapsed % 60;
 	QString tempTime;
 	QTextStream timeStream(&tempTime);
 
@@ -176,15 +175,16 @@ void Arduino::processLine(const QByteArray &buffer){
 		timeStream<<QString::number(seconds);
 	}
 
-	controlData.elapsedTime=tempTime;
+    QString data;
+    QTextStream stream(&data);
 
+	controlData.elapsedTime=tempTime;
 	controlData.heating1=boolArray[1];
 	controlData.heating2=boolArray[2];
 	controlData.heating3=boolArray[3];
 	controlData.running=boolArray[0];
 	controlData.paused=boolArray[4];
-	QString data;
-	QTextStream stream(&data);
+
 	auto dateTime=QDateTime::currentDateTime();
 	stream<<dateTime.date().toString()<<",";
 	stream<<dateTime.time().toString()<<",";
@@ -208,7 +208,6 @@ void Arduino::serialConnect(){
 	}
 	bool arduinoFound=this->FindArduinoSerialPort();
 	if(arduinoFound){
-
 		if(!this->arduino->open(QSerialPort::ReadWrite)){
 			emit this->criticalError("Error: Failed to connect to burn-in station");
 			this->connected=false;
@@ -236,7 +235,7 @@ void Arduino::readSerial(){
 
 void Arduino::sendFirmwareUpdate(const QByteArray &settings){
 	this->arduino->write(settings);
-	if(!this->arduino->waitForBytesWritten(3000)){
+    if(!this->arduino->waitForBytesWritten(5000)){
 		emit this->criticalError("Error: Timeout while sending "+settings+" command");
 	}
 }

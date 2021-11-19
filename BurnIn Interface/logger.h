@@ -15,7 +15,7 @@
 #include "globaldatadefinitions.h"
 
 #define	INTERVAL		(double)5.00
-#define FileServer		"172.20.4.11"
+#define FileServer		"172.20.4.6"
 #define Port			445
 #define TimeOut			100
 #define NetDirectory	"/media/ARCHE/"
@@ -29,9 +29,7 @@ struct LogStatus{
 	bool localFirstWrite=false;
 	bool netInitFailed=true;
 	bool netFirstWrite=false;
-
 	bool firstTime=true;
-
 	time_t lastWrite;
 
 	LogStatus(){
@@ -77,11 +75,9 @@ struct LogStatus{
 		if(this->firstTime){
 			this->firstTime=false;
 			time(&this->lastWrite);
-			qDebug()<<"Time start: "<<this->lastWrite<<endl;
 			return true;
 		}else{			
 			double diff=difftime(time(nullptr),this->lastWrite);
-			qDebug()<<"Time Delta: "<<diff<<endl;
 			if(diff>=INTERVAL){
 				time(&this->lastWrite);
 				return true;
@@ -101,6 +97,7 @@ class Logger:public QObject
 		//bool isRunning();
 	signals:
 		void publishFileError(const QString &error);
+        void publishMessage(const QString& message);
 	public slots:
 		void InitLogger(const QString& filename);
 		void writeOutData(const QString &data);
@@ -112,9 +109,9 @@ class Logger:public QObject
 		QString fullLocalFilePath;
 		const QString headers="Date,System Time,RunTime,V11,V12,V21,V22,V31,V32,i11,i12,i21,i22,i31,i32,Temp1,Temp2,Temp3,CurrentSetpoint(mA)";
 		LogStatus logStatus;
+        bool networkErrorLatch;
+        bool fCopyErrorLatch;
 		const double logTime=1000.00;
-		std::atomic<bool> loggerRunning;
-		std::atomic<bool> paused;
 };
 
 #endif // LOGGER_H

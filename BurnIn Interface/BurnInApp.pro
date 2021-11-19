@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT+= core gui serialport serialbus network
+QT+= core gui network serialport serialbus sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -31,7 +31,8 @@ SOURCES += \
     logger.cpp \
     modbusserver.cpp \
     configsettingdialog.cpp \
-    ledindicator.cpp
+    ledindicator.cpp \
+    databaselogger.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -40,7 +41,8 @@ HEADERS += \
     modbusserver.h \
     globaldatadefinitions.h \
     configsettingdialog.h \
-    ledindicator.h
+    ledindicator.h \
+    databaselogger.h
 
 FORMS += \
         mainwindow.ui \

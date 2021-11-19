@@ -1,7 +1,6 @@
 #include "logger.h"
 
 Logger::Logger(QObject *parent):QObject(parent){
-
 }
 
 Logger::~Logger(){
@@ -11,34 +10,59 @@ Logger::~Logger(){
 void Logger::InitLogger(const QString& filename){
 	this->fullNetFilePath=NetDirectory+filename+".csv";
 	this->fullLocalFilePath=LocalDirectory+filename+".csv";
-	bool netOkay,localOkay;
-	netOkay=false;
-	localOkay=false;
+    this->networkErrorLatch=false;
+    this->fCopyErrorLatch=false ;
+
 	if(this->logStatus.networkConnected()){
-		netOkay=this->logNet(this->headers);
+        this->logStatus.loggingNet=this->logNet(this->headers);
 	}else{
-		netOkay=false;
 		this->logStatus.loggingNet=false;
 	}
 
-	localOkay=this->logLocal(this->headers);
+    this->logStatus.loggingLocal=this->logLocal(this->headers);
 
-	if(!netOkay && !localOkay){
+    if(!this->logStatus.loggingNet && !this->logStatus.loggingLocal){
 		this->logStatus.InitFailed();
-		emit this->publishFileError("Error: Failed to log to file server and locally.\n"
-									"Please contact Andrew Elmendorf\n"
-									"Office: x159\n"
-									"Cell: 843-687-6812\n");
+        QString message;
+        QTextStream buffer(&message);
+        buffer<<"Error: failed to log to file server and local"<<endl;
+        buffer<<"Please contact Andrew Elmendorf"<<endl;
+        buffer<<"Office: x159"<<endl;
+        buffer<<"Cell: 843-687-6812"<<endl;
+        emit this->publishFileError(message);
 		return;
-	}
+    }else if(!this->logStatus.loggingNet && this->logStatus.loggingLocal){
+        this->logStatus.LoggingLocal();
+        this->networkErrorLatch=true;
+        QString message;
+        QTextStream buffer(&message);
+        buffer<<"Error: Failed to network log"<<endl;
+        buffer<<"Log should start once network connection or server access is fixes"<<endl;
+        emit this->publishFileError(message);
+    }else if(this->logStatus.loggingNet && !this->logStatus.loggingLocal){
+        this->logStatus.LoggingNet();
+        this->networkErrorLatch=false;
+        QString message;
+        QTextStream buffer(&message);
+        buffer<<"Error: Failed to local log"<<endl;
+        emit this->publishFileError(message);
+    }else{
+        this->logStatus.LoggingNet();
+        this->logStatus.LoggingLocal();
+        this->networkErrorLatch=true;
+        QString message;
+        QTextStream buffer(&message);
+        buffer<<"Logging started without issue"<<endl;
+        emit this->publishMessage(message);
+    }
 
-	if(netOkay){
+/*	if(netOkay){
 		this->logStatus.LoggingNet();
 	}
 
 	if(localOkay){
 		this->logStatus.LoggingLocal();
-	}
+    }*/
 }
 
 void Logger::writeOutData(const QString &data){
@@ -48,9 +72,16 @@ void Logger::writeOutData(const QString &data){
 		}
 		if(this->logStatus.loggingNet){
 			if(this->logStatus.networkConnected()){
-				this->logNet(data);
+                this->logStatus.loggingNet=this->logNet(data);
 			}else{
-				this->logStatus.loggingNet=false;
+                if(!this->networkErrorLatch){
+                    this->networkErrorLatch=true;
+                    QString message;
+                    QTextStream buffer(&message);
+                    buffer<<"Log Error: Network logging interupted"<<endl;
+                    emit this->publishFileError(message);
+                    this->logStatus.loggingNet=false;
+                }
 			}
 		}else if(this->logStatus.networkConnected()){
 			QFile localFile(this->fullLocalFilePath);
@@ -60,17 +91,46 @@ void Logger::writeOutData(const QString &data){
 				if(dir.remove(this->fullNetFilePath)){
 					if(localFile.copy(this->fullNetFilePath)){
 						this->logStatus.loggingNet=true;
+                        this->networkErrorLatch=false;
+                        this->fCopyErrorLatch=false;
+                        QString message;
+                        QTextStream buffer(&message);
+                        buffer<<"Log Message:Network logging continued"<<endl;
+                        emit this->publishMessage(message);
 					}else{
-						this->logStatus.loggingNet=false;
+                        if(!this->fCopyErrorLatch){
+                            this->fCopyErrorLatch=true;
+                            QString message;
+                            QTextStream buffer(&message);
+                            buffer<<"Log Error: Failed to copy local file to network"<<endl;
+                            emit this->publishFileError(message);
+                            this->logStatus.loggingNet=false;
+                        }
 					}
 				}else{
+                    QString message;
+                    QTextStream buffer(&message);
+                    buffer<<"Log Error: Failed to remove old network file"<<endl;
+                    emit this->publishFileError(message);
 					this->logStatus.loggingNet=false;
 				}
 			}else{
 				if(localFile.copy(this->fullNetFilePath)){
 					this->logStatus.loggingNet=true;
+                    QString message;
+                    QTextStream buffer(&message);
+                    buffer<<"Log Message:Network logging continued"<<endl;
+                    emit this->publishMessage(message);
 				}else{
-					this->logStatus.loggingNet=false;
+                    if(!this->fCopyErrorLatch){
+                        this->fCopyErrorLatch=true;
+                        this->logStatus.loggingNet=false;
+                        QString message;
+                        QTextStream buffer(&message);
+                        buffer<<"Log Error: Failed to copy local file to network"<<endl;
+                        emit this->publishFileError(message);
+                        this->logStatus.loggingNet=false;
+                    }
 				}
 			}
 		}
@@ -82,7 +142,6 @@ bool Logger::logLocal(const QString &data){
 	if(file.open(QFile::Append | QFile::Text | QFile::WriteOnly)){
 		QTextStream stream(&file);
 		stream<<data<<endl;
-		//stream.flush();
 		file.close();
 		return true;
 	}else{
@@ -92,11 +151,9 @@ bool Logger::logLocal(const QString &data){
 
 bool Logger::logNet(const QString &data){
 	QFile file(this->fullNetFilePath);
-
 	if(file.open(QFile::Append | QFile::Text | QFile::WriteOnly)){
 		QTextStream stream(&file);
 		stream<<data<<endl;
-		//stream.flush();
 		file.close();
 		return true;
 	}else{

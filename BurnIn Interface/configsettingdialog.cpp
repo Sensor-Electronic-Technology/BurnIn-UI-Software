@@ -15,8 +15,7 @@ ConfigSettingDialog::ConfigSettingDialog(QWidget *parent) :
 	initGui();
 }
 
-ConfigSettingDialog::~ConfigSettingDialog()
-{
+ConfigSettingDialog::~ConfigSettingDialog(){
 	delete ui;
 }
 
@@ -24,33 +23,29 @@ void ConfigSettingDialog::loadSettings(){
 	QSettings settings(this->settingsFile,QSettings::NativeFormat);
 	settings.sync();
 	this->appSettings.switchingEnabled=settings.value("switching_enabled",false).toBool();
-	this->appSettings.id=settings.value("id","0").toString();
-	this->appSettings.current2=settings.value("current2","120").toString();
+    this->appSettings.id=settings.value("id",0).toInt();
+    this->appSettings.defaultCurrent=settings.value("defaultCurrent",150).toInt();
 	this->appSettings.setTemperature=settings.value("setTemperature",85).toInt();
 }
 
 
 void ConfigSettingDialog::initGui(){
-	QStringList list;
-	list.append("120");
-	list.append("060");
-	list.append("none");
-	this->ui->currentSelect2->addItems(list);
-	emit this->ui->currentSelect2->setCurrentIndex(list.indexOf(this->appSettings.current2));
+    int index=this->ui->defaultCurrentSelect->findText(QString::number(this->appSettings.defaultCurrent));
+    emit this->ui->defaultCurrentSelect->setCurrentIndex(index);
 	emit this->ui->switchEnabledInput->setChecked(this->appSettings.switchingEnabled);
-	emit this->ui->stationIdInput->setText(this->appSettings.id);
+    emit this->ui->stationIdInput->setValue(this->appSettings.id);
 	emit this->ui->setTemperatureInput->setValue(this->appSettings.setTemperature);
 }
 
 void ConfigSettingDialog::on_settingsButtons_accepted(){
 	QSettings settings(this->settingsFile,QSettings::NativeFormat);
 	this->appSettings.switchingEnabled=this->ui->switchEnabledInput->isChecked();
-	this->appSettings.id=this->ui->stationIdInput->text();
-	this->appSettings.current2=this->ui->currentSelect2->currentText();
+    this->appSettings.id=this->ui->stationIdInput->value();
+    this->appSettings.defaultCurrent=this->ui->defaultCurrentSelect->currentText().toInt();
 	this->appSettings.setTemperature=this->ui->setTemperatureInput->value();
 	settings.setValue("switching_enabled",this->appSettings.switchingEnabled);
 	settings.setValue("id",this->appSettings.id);
-	settings.setValue("current2",this->appSettings.current2);
+    settings.setValue("defaultCurrent",this->appSettings.defaultCurrent);
 	settings.setValue("setTemperature",this->appSettings.setTemperature);
 	settings.sync();
 	emit this->settingsUpdate(this->appSettings);

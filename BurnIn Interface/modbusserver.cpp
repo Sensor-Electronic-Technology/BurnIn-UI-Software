@@ -1,7 +1,6 @@
 #include "modbusserver.h"
 
-ModbusServer::ModbusServer(QObject *parent) : QObject(parent)
-{
+ModbusServer::ModbusServer(QObject *parent) : QObject(parent){
 
 }
 
