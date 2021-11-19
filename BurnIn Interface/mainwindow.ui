@@ -119,7 +119,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -932,7 +932,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>P1 Area</string>
+         <string>P5 Area</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_12">
@@ -945,7 +945,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>P2 Area</string>
+         <string>P6 Area</string>
         </property>
        </widget>
        <widget class="QComboBox" name="pocket3P2Area">
@@ -1076,7 +1076,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>P2 Area</string>
+         <string>P4 Area</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_8">
@@ -1112,7 +1112,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>P1 Area</string>
+         <string>P3 Area</string>
         </property>
        </widget>
        <widget class="QWidget" name="gridLayoutWidget_3">
