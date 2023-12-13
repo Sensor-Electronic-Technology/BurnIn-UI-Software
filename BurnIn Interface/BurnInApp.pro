@@ -32,7 +32,8 @@ SOURCES += \
     modbusserver.cpp \
     configsettingdialog.cpp \
     ledindicator.cpp \
-    databaselogger.cpp
+    databaselogger.cpp \
+    probetracker.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -42,7 +43,8 @@ HEADERS += \
     globaldatadefinitions.h \
     configsettingdialog.h \
     ledindicator.h \
-    databaselogger.h
+    databaselogger.h \
+    probetracker.h
 
 FORMS += \
         mainwindow.ui \

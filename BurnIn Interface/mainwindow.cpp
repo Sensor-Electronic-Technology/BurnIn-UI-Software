@@ -7,7 +7,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),ui(new Ui::MainWin
 	this->arduino=new Arduino(this);
 	this->logger=new Logger(this);
     this->database=new DatabaseLogger(this);
-    this->database->InitConnection();
+    this->probeTracker=new ProbeTracker(this,80,1.5);
+    //this->database->InitConnection();
 	this->settingDialog=new ConfigSettingDialog();
     this->setupLedIndicators();
     this->setupTestInfo();
@@ -17,7 +18,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),ui(new Ui::MainWin
     this->resetLatch=false;
     this->stopLatch=false;
     this->startPressed=false;
+    this->timer=new QTimer(this);
+    /*this->dummyData.currentSP=150;
+    this->dummyData.runTime=25200;
+    this->dummyData.i11=150;
+    this->dummyData.i12=150;
+    this->dummyData.i21=150;
+    this->dummyData.i22=150;
+    this->dummyData.i31=150;
+    this->dummyData.i32=150;*/
 
+
+    //connect(this->timer,SIGNAL(timeout()),this,SLOT(timer_update()));
 	connect(this->arduino,&Arduino::criticalError,this,&MainWindow::recieveCriticalError);
 	connect(this->arduino,&Arduino::dataUpdate,this,&MainWindow::updateUI);
 	connect(this->arduino,&Arduino::comUpdate,this,&MainWindow::recieveComMessage);
@@ -27,6 +39,25 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),ui(new Ui::MainWin
 	connect(this->settingDialog,&ConfigSettingDialog::settingsUpdate,this,&MainWindow::updateDeviceSettings);
     connect(this->database,&DatabaseLogger::databaseError,this,&MainWindow::recieveDatabaseError);
     emit this->ui->statusDisplay->setText("Idle");
+
+    /*this->timer->start(250);
+    this->probeTracker->StartTracking(this->dummyData);*/
+}
+
+void MainWindow::timer_update(){
+    this->dummyData.i22-=.5;
+    this->probeTracker->Update(this->dummyData);
+    emit this->ui->p1StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p1));
+    emit this->ui->p2StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p2));
+    emit this->ui->p3StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p3));
+    emit this->ui->p4StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p4));
+    emit this->ui->p5StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p5));
+    emit this->ui->p6StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p6));
+    this->ui->elapsedTimeBox->setText(this->probeTracker->GetElapsedString());
+    for(int i=0;i<6;i++){
+        this->padIndicators[i]->setState(this->probeTracker->GetPadStatus(i));
+    }
+
 }
 
 MainWindow::~MainWindow(){
@@ -38,6 +69,10 @@ MainWindow::~MainWindow(){
 	}
     if(this->database!=nullptr){
         delete this->database;
+    }
+
+    if(this->probeTracker!=nullptr){
+        delete this->probeTracker;
     }
     delete ui;
 }
@@ -63,6 +98,9 @@ void MainWindow::initAppSettings(){
     this->appSettings.id=settings.value("id",0).toInt();
     this->appSettings.defaultCurrent=settings.value("defaultCurrent",150).toInt();
     this->appSettings.setTemperature=settings.value("setTemperature",85).toInt();
+    this->appSettings.timeOffPercent=settings.value("timeOffPercent",1.5).toDouble();
+    this->appSettings.currentPercent=settings.value("currentPercent",80.0).toDouble();
+    this->probeTracker->SetLimits(this->appSettings.timeOffPercent,this->appSettings.currentPercent);
     this->stationId="Station"+QString::number(this->appSettings.id);
 }
 
@@ -81,12 +119,18 @@ void MainWindow::logRunningTest(){
     testLog.setValue("w3a2",QString(testInfo.pocket3.p2_area));
     testLog.setValue("setCurrent",testInfo.set_current);
     testLog.setValue("setTemp",testInfo.set_temp);
+
+    testLog.setValue("p1_rt",this->probeTracker->GetPocketRuntime(Pocket::p1));
+    testLog.setValue("p2_rt",this->probeTracker->GetPocketRuntime(Pocket::p2));
+    testLog.setValue("p3_rt",this->probeTracker->GetPocketRuntime(Pocket::p3));
+    testLog.setValue("p4_rt",this->probeTracker->GetPocketRuntime(Pocket::p4));
+    testLog.setValue("p5_rt",this->probeTracker->GetPocketRuntime(Pocket::p5));
+    testLog.setValue("p6_rt",this->probeTracker->GetPocketRuntime(Pocket::p6));
     testLog.sync();
     time(&this->lastTestLogWrite);
 }
 
 TestInfo MainWindow::checkRunningTest(){
-    qDebug()<<"Reading TestLog, should I be here"<<endl;
     TestInfo testInfo;
     QSettings testLog(this->testLogFileName,QSettings::NativeFormat);
     testLog.sync();
@@ -102,6 +146,13 @@ TestInfo MainWindow::checkRunningTest(){
     testInfo.pocket3.p2_area=testLog.value("w3a2","").toString()[0];
     testInfo.set_current=testLog.value("setCurrent",0).toInt();
     testInfo.set_temp=testLog.value("setTemp",0).toInt();
+
+    this->probeTracker->SetPocketRuntime(Pocket::p1,testLog.value("p1_rt",0).toLongLong());
+    this->probeTracker->SetPocketRuntime(Pocket::p2,testLog.value("p2_rt",0).toLongLong());
+    this->probeTracker->SetPocketRuntime(Pocket::p3,testLog.value("p3_rt",0).toLongLong());
+    this->probeTracker->SetPocketRuntime(Pocket::p4,testLog.value("p4_rt",0).toLongLong());
+    this->probeTracker->SetPocketRuntime(Pocket::p5,testLog.value("p5_rt",0).toLongLong());
+    this->probeTracker->SetPocketRuntime(Pocket::p6,testLog.value("p6_rt",0).toLongLong());
     return testInfo;
 }
 
@@ -184,11 +235,26 @@ void MainWindow::clearRunningTest(){
     testLog.setValue("w3a2","");
     testLog.setValue("setCurrent","");
     testLog.setValue("setTemp","");
+
+    testLog.setValue("p1_rt","");
+    testLog.setValue("p2_rt","");
+    testLog.setValue("p3_rt","");
+    testLog.setValue("p4_rt","");
+    testLog.setValue("p5_rt","");
+    testLog.setValue("p6_rt","");
+
     testLog.sync();
 }
 
 void MainWindow::setupLedIndicators(){
     this->indicators=new Indicator[3];
+    this->padIndicators=new Indicator[6];
+    this->padIndicators[0]=new LedIndicator();
+    this->padIndicators[1]=new LedIndicator();
+    this->padIndicators[2]=new LedIndicator();
+    this->padIndicators[3]=new LedIndicator();
+    this->padIndicators[4]=new LedIndicator();
+    this->padIndicators[5]=new LedIndicator();
     this->indicators[0]=new LedIndicator();
     this->indicators[1]=new LedIndicator();
     this->indicators[2]=new LedIndicator();
@@ -199,34 +265,72 @@ void MainWindow::setupLedIndicators(){
     this->ui->gridLayout->addWidget(this->indicators[0],1,0);
     this->ui->gridLayout->addWidget(this->indicators[1],1,1);
     this->ui->gridLayout->addWidget(this->indicators[2],1,2);
+
+    this->ui->padIndicatorGrid->addWidget(this->padIndicators[0],0);
+    this->ui->padIndicatorGrid->addWidget(this->padIndicators[1],0);
+    this->ui->padIndicatorGrid->addWidget(this->padIndicators[2],0);
+    this->ui->padIndicatorGrid->addWidget(this->padIndicators[3],0);
+    this->ui->padIndicatorGrid->addWidget(this->padIndicators[4],0);
+    this->ui->padIndicatorGrid->addWidget(this->padIndicators[5],0);
+
     this->ui->waferSuccessP1->addWidget(this->waferIndicators[0],1,0);
     this->ui->waferSuccessP2->addWidget(this->waferIndicators[1],1,0);
     this->ui->waferSuccessP3->addWidget(this->waferIndicators[2],1,0);
     this->indicators[0]->setLedSize(20);
     this->indicators[1]->setLedSize(20);
     this->indicators[2]->setLedSize(20);
+
     this->waferIndicators[0]->setLedSize(25);
     this->waferIndicators[1]->setLedSize(25);
     this->waferIndicators[2]->setLedSize(25);
+
+    this->padIndicators[0]->setLedSize(25);
+    this->padIndicators[1]->setLedSize(25);
+    this->padIndicators[2]->setLedSize(25);
+    this->padIndicators[3]->setLedSize(25);
+    this->padIndicators[4]->setLedSize(25);
+    this->padIndicators[5]->setLedSize(25);
+
     this->ui->gridLayout->setAlignment(this->indicators[0],Qt::AlignHCenter);
     this->ui->gridLayout->setAlignment(this->indicators[1],Qt::AlignHCenter);
     this->ui->gridLayout->setAlignment(this->indicators[2],Qt::AlignHCenter);
+
     this->ui->waferSuccessP1->setAlignment(this->waferIndicators[0],Qt::AlignHCenter);
     this->ui->waferSuccessP2->setAlignment(this->waferIndicators[1],Qt::AlignHCenter);
     this->ui->waferSuccessP3->setAlignment(this->waferIndicators[2],Qt::AlignHCenter);
+
+    this->ui->padIndicatorGrid->setAlignment(this->padIndicators[0],Qt::AlignHCenter);
+    this->ui->padIndicatorGrid->setAlignment(this->padIndicators[1],Qt::AlignHCenter);
+    this->ui->padIndicatorGrid->setAlignment(this->padIndicators[2],Qt::AlignHCenter);
+    this->ui->padIndicatorGrid->setAlignment(this->padIndicators[3],Qt::AlignHCenter);
+    this->ui->padIndicatorGrid->setAlignment(this->padIndicators[4],Qt::AlignHCenter);
+    this->ui->padIndicatorGrid->setAlignment(this->padIndicators[5],Qt::AlignHCenter);
+
     this->indicators[0]->setState(false);
     this->indicators[1]->setState(false);
     this->indicators[2]->setState(false);
     this->waferIndicators[0]->setState(false);
     this->waferIndicators[1]->setState(false);
     this->waferIndicators[2]->setState(false);
+    this->padIndicators[0]->setState(true);
+    this->padIndicators[1]->setState(true);
+    this->padIndicators[2]->setState(true);
+    this->padIndicators[3]->setState(true);
+    this->padIndicators[4]->setState(true);
+    this->padIndicators[5]->setState(true);
     this->waferIndicators[0]->setOffColor(QColor::fromRgb(255,0,0));
     this->waferIndicators[1]->setOffColor(QColor::fromRgb(255,0,0));
     this->waferIndicators[2]->setOffColor(QColor::fromRgb(255,0,0));
+
+    this->padIndicators[0]->setOffColor(QColor::fromRgb(255,0,0));
+    this->padIndicators[1]->setOffColor(QColor::fromRgb(255,0,0));
+    this->padIndicators[2]->setOffColor(QColor::fromRgb(255,0,0));
+    this->padIndicators[3]->setOffColor(QColor::fromRgb(255,0,0));
+    this->padIndicators[4]->setOffColor(QColor::fromRgb(255,0,0));
+    this->padIndicators[5]->setOffColor(QColor::fromRgb(255,0,0));
 }
 
 void MainWindow::updateUI(const ControlValues &data){
-
 	emit this->ui->v11_display->display(QString::number(data.v11,'f',1));
 
 	emit this->ui->v12_display->display(QString::number(data.v12,'f',1));
@@ -252,7 +356,21 @@ void MainWindow::updateUI(const ControlValues &data){
 	this->indicators[0]->setState(data.heating1);
 	this->indicators[1]->setState(data.heating2);
 	this->indicators[2]->setState(data.heating3);
-	emit this->ui->elapsedTimeBox->setText(data.elapsedTime);
+    if(!data.paused){
+        this->probeTracker->Update(data);
+    }
+    //emit this->ui->elapsedTimeBox->setText(data.elapsedTime);
+
+    emit this->ui->p1StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p1));
+    emit this->ui->p2StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p2));
+    emit this->ui->p3StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p3));
+    emit this->ui->p4StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p4));
+    emit this->ui->p5StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p5));
+    emit this->ui->p6StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p6));
+    //this->ui->elapsedTimeBox->setText(this->probeTracker->GetElapsedString());
+    for(int i=0;i<6;i++){
+        this->padIndicators[i]->setState(this->probeTracker->GetPadStatus(i));
+    }
 	AppState newState=AppState::IDLE;
 	if(data.running && !data.paused){
 		newState=AppState::RUNNING;
@@ -274,8 +392,10 @@ void MainWindow::transitionState(AppState newState,const ControlValues &data){
                     if(this->startPressed){
                         this->startPressed=false;
                         this->startNewTest(data.currentSP,data.temperatureSP);
+                        this->probeTracker->StartTracking(data);
                     }else{
                         this->continueTest();
+                        this->probeTracker->ContinueTracking(data);
                     }
                     this->appState=newState;
                     qDebug()<<"IDLE to RUNNING"<<endl;
@@ -284,6 +404,7 @@ void MainWindow::transitionState(AppState newState,const ControlValues &data){
                     emit this->ui->statusDisplay->setText("Paused");
                     emit this->ui->startB->setText("Continue");
                     this->continueTest();
+                    this->probeTracker->ContinueTracking(data);
                     this->appState=newState;
                     qDebug()<<"IDLE to PAUSED"<<endl;
                 }
@@ -294,11 +415,13 @@ void MainWindow::transitionState(AppState newState,const ControlValues &data){
                     emit this->ui->startB->setText("Continue");
                     emit this->ui->statusDisplay->setText("Paused");
                     this->appState=newState;
+                    this->probeTracker->PauseTracking();
                     qDebug()<<"RUNNING to PAUSED"<<endl;
-                }else if(newState==AppState::IDLE){                    
+                }else if(newState==AppState::IDLE){
                     emit this->ui->statusDisplay->setText("Idle");
                     emit this->ui->startB->setText("Start Burn-In");
                     this->appState=newState;
+                    this->probeTracker->StopTracking();
                     qDebug()<<"RUNNING to IDLE"<<endl;
                     if(this->resetLatch){
                         this->stopLatch=false;
@@ -319,10 +442,6 @@ void MainWindow::transitionState(AppState newState,const ControlValues &data){
                         this->clearRunningTest();
                         qDebug()<<"RUNNING to STOPPED"<<endl;
                     }
-
-                    if(this->stopLatch){
-
-                    }
                 }
                 break;
             }
@@ -331,11 +450,13 @@ void MainWindow::transitionState(AppState newState,const ControlValues &data){
                     emit this->ui->statusDisplay->setText("Running");
                     emit this->ui->startB->setText("Pause");
                     this->appState=newState;
+                    this->probeTracker->ContinueTracking();
                     qDebug()<<"PAUSED to RUNNING"<<endl;
                 }else if(newState==AppState::IDLE){
                     emit this->ui->statusDisplay->setText("Idle");
                     emit this->ui->startB->setText("Start Burn-In");
                     this->appState=newState;
+                    this->probeTracker->StopTracking();
                     qDebug()<<"PAUSED to IDLE"<<endl;
                     if(this->resetLatch){
                         this->resetLatch=false;
@@ -482,10 +603,12 @@ void MainWindow::createTest(){
 }
 
 void MainWindow::updateDeviceSettings(const ApplicationSettings &settings){
+    this->probeTracker->SetLimits(this->appSettings.timeOffPercent,this->appSettings.currentPercent);
     if(this->arduino->isConnected()){
         QString buffer;
         QTextStream stream(&buffer);
         this->appSettings=settings;
+
         this->stationId="Station"+QString::number(settings.id);
         int enabled=(int)settings.switchingEnabled;
         stream<<"U"<<QString::number(enabled);

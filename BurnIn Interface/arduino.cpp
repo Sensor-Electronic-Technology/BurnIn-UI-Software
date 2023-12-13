@@ -140,21 +140,27 @@ void Arduino::processLine(const QByteArray &buffer){
 	controlData.t2=realArray[7];
 	controlData.t3=realArray[8];
 
+
+
 	controlData.i11=realArray[12];
 	controlData.i12=realArray[13];
 	controlData.i21=realArray[14];
 	controlData.i22=realArray[15];
 	controlData.i31=realArray[16];
 	controlData.i32=realArray[17];
+    controlData.runTime=long(realArray[18]);
 
 	controlData.currentSP=realArray[11];
 	controlData.temperatureSP=realArray[10];
     controlData.elapsed=long(this->realArray[9]);
+
     int hours=controlData.elapsed/3600;
     int minutes=(controlData.elapsed/60) %60;
     int seconds=controlData.elapsed % 60;
-	QString tempTime;
+    controlData.SetTimeString(hours,minutes,seconds);
+/*	QString tempTime;
 	QTextStream timeStream(&tempTime);
+
 
 	if((hours / 10)<1 || hours==0){
 		timeStream<<"0"+QString::number(hours)<<":";
@@ -173,12 +179,12 @@ void Arduino::processLine(const QByteArray &buffer){
 		timeStream<<"0"+QString::number(seconds);
 	}else {
 		timeStream<<QString::number(seconds);
-	}
+    }*/
 
     QString data;
     QTextStream stream(&data);
 
-	controlData.elapsedTime=tempTime;
+    //controlData.elapsedTime=tempTime;
 	controlData.heating1=boolArray[1];
 	controlData.heating2=boolArray[2];
 	controlData.heating3=boolArray[3];

@@ -6,6 +6,9 @@
 #include <QSettings>
 #include <QApplication>
 #include <QStandardPaths>
+#include <QTextStream>
+#include <chrono>
+
 
 using namespace std;
 
@@ -28,6 +31,17 @@ enum SerialCommand{
 	SWITCHCURRENT,
 	RESET
 };
+
+enum Pocket{
+    p1=0,
+    p2=1,
+    p3=2,
+    p4=3,
+    p5=4,
+    p6=5
+};
+
+
 
 struct ControlValues{
 	double v11,v12,v21,v22,v31,v32,t1,t2,t3;
@@ -95,6 +109,188 @@ struct ControlValues{
         this->runTime=rhs.runTime;
         this->elapsed=rhs.elapsed;
 	}
+
+    void SetTimeString(int hours,int minutes,int seconds){
+        QString tempTime;
+        QTextStream timeStream(&tempTime);
+
+
+        if((hours / 10)<1 || hours==0){
+            timeStream<<"0"+QString::number(hours)<<":";
+        }else {
+            timeStream<<QString::number(hours)<<":";
+        }
+
+
+        if((minutes / 10)<1 || minutes==0){
+            timeStream<<"0"+QString::number(minutes)<<":";
+        }else {
+            timeStream<<QString::number(minutes)<<":";
+        }
+
+        if((seconds / 10)<1 || seconds==0){
+            timeStream<<"0"+QString::number(seconds);
+        }else {
+            timeStream<<QString::number(seconds);
+        }
+        this->elapsedTime=tempTime;
+    }
+};
+
+struct PadStatus{
+    time_t lastUpdate;
+    bool testRunning;
+    double timeOffPercent;
+    double  currentPercent;
+    long runTime;
+    double setCurrent;
+    double minCurrent=0;
+    double minTime;
+    long elapsed;
+    long runtimes[6]={0,0,0,0,0,0};
+    bool statues[6]={false,false,false,false,false,false};
+
+    PadStatus(){
+        for(int i=0;i<6;i++){
+            this->runtimes[i]=0;
+            this->statues[i]=false;
+        }
+        this->timeOffPercent=1-0.015;
+        this->currentPercent=0.8;
+
+        this->testRunning=false;
+    }
+
+    PadStatus(double percentTime,double percentCurrent){
+        for(int i=0;i<6;i++){
+            this->runtimes[i]=0;
+            this->statues[i]=false;
+        }
+        this->timeOffPercent=(1-(percentTime/100));
+        this->currentPercent=percentCurrent/100;
+    }
+
+    PadStatus(const PadStatus &rhs){
+        for(int i=0;i<6;i++){
+            this->runtimes[i]=rhs.runtimes[i];
+            this->statues[i]=rhs.statues[i];
+        }
+    }
+
+    PadStatus& operator =(const  PadStatus& rhs){
+        for(int i=0;i<6;i++){
+            this->runtimes[i]=rhs.runtimes[i];
+            this->statues[i]=rhs.statues[i];
+        }
+        return *this;
+    }
+
+    void StartTest(const ControlValues& data,double percentTime,double percentCurrent){
+        this->setCurrent=data.currentSP;
+        this->runTime=data.runTime;
+        this->timeOffPercent=(1-(percentTime/100));
+        this->currentPercent=percentCurrent/100;
+        this->minCurrent=this->setCurrent*this->currentPercent;
+        this->minTime=this->runTime*this->timeOffPercent;
+        this->testRunning=true;
+        time(&this->lastUpdate);
+    }
+
+    void StartTest(const ControlValues& data){
+        this->setCurrent=data.currentSP;
+        this->runTime=data.runTime;
+        this->minCurrent=this->setCurrent*this->currentPercent;
+        this->minTime=this->runTime*this->timeOffPercent;
+        this->testRunning=true;
+        time(&this->lastUpdate);
+    }
+    void StartTest(long rt,double currentSP,double percentTime,double percentCurrent){
+        this->setCurrent=currentSP;
+        this->runTime=rt;
+        this->timeOffPercent=(1-(percentTime/100));
+        this->currentPercent=percentCurrent/100;
+        this->minCurrent=this->setCurrent*this->currentPercent;
+        this->minTime=this->runTime*this->timeOffPercent;
+        this->testRunning=true;
+        time(&this->lastUpdate);
+    }
+
+    void ChangeLimits(double percentTime,double percentCurrent){
+        this->timeOffPercent=(1-(percentTime/100));
+        this->currentPercent=percentCurrent/100;
+    }
+
+    void StopTest(){
+        this->runTime=0;
+        this->testRunning=false;
+    }
+
+
+    void ParseControlData(const ControlValues& data){
+        if(this->testRunning){
+            auto diff=difftime(time(nullptr),this->lastUpdate);
+            time(&this->lastUpdate);
+
+            if(data.i11>=this->minCurrent){
+                this->runtimes[Pocket::p1]+=diff;
+            }
+
+            if(data.i12>=this->minCurrent){
+                this->runtimes[Pocket::p2]+=diff;
+            }
+
+            if(data.i21>=this->minCurrent){
+                this->runtimes[Pocket::p3]+=diff;
+            }
+
+
+            if(data.i22>=this->minCurrent){
+                this->runtimes[Pocket::p4]+=diff;
+            }
+
+
+            if(data.i31>=this->minCurrent){
+                this->runtimes[Pocket::p5]+=diff;
+            }
+
+            if(data.i32>=this->minCurrent){
+                this->runtimes[Pocket::p6]+=diff;
+            }
+
+            for(int i=0;i<6;i++){
+                this->statues[i]=(data.elapsed-this->runtimes[i])>=this->minTime;
+            }
+        }
+    }
+
+    QString GetTimeString(Pocket pocket){
+        int hours=this->runtimes[pocket]/3600;
+        int minutes=(this->runtimes[pocket]/60) % 60;
+        int seconds=this->runtimes[pocket] % 60;
+
+        QString tempTime;
+        QTextStream timeStream(&tempTime);
+
+
+        if((hours / 10)<1 || hours==0){
+            timeStream<<"0"+QString::number(hours)<<":";
+        }else {
+            timeStream<<QString::number(hours)<<":";
+        }
+
+        if((minutes / 10)<1 || minutes==0){
+            timeStream<<"0"+QString::number(minutes)<<":";
+        }else {
+            timeStream<<QString::number(minutes)<<":";
+        }
+
+        if((seconds / 10)<1 || seconds==0){
+            timeStream<<"0"+QString::number(seconds);
+        }else {
+            timeStream<<QString::number(seconds);
+        }
+        return tempTime;
+    }
 };
 
 struct ApplicationSettings{
@@ -102,6 +298,8 @@ struct ApplicationSettings{
 	bool switchingEnabled;
     int defaultCurrent;
 	int setTemperature;
+    double timeOffPercent;
+    double currentPercent;
 
 	ApplicationSettings(){
         this->id=0;
@@ -240,7 +438,6 @@ struct HoldingRegisters{
 	quint16 id;
 	quint16 current2;
 	quint16 setTemperature;
-
 };
 
 enum AppState{

@@ -15,6 +15,8 @@
 #include "configsettingdialog.h"
 #include "ledindicator.h"
 #include "databaselogger.h"
+#include "probetracker.h"
+
 
 #define realArrSize         100
 #define boolArrSize         100
@@ -34,6 +36,7 @@ class MainWindow : public QMainWindow
 		~MainWindow();
 
 	private slots:
+        void timer_update();
 		void on_connectB_clicked();
 		void on_startB_clicked();
 		void on_currentToggle_clicked();
@@ -86,11 +89,17 @@ private:
 		Ui::MainWindow *ui;
 		ConfigSettingDialog *settingDialog;
 		Indicator *indicators;
+        Indicator *padIndicators;
         Indicator *waferIndicators;
         TestInfo currentTest;
         QString testLogFileName;
-        QTimer testLogTimer;
+        QTimer* timer;
         time_t lastTestLogWrite;
+        time_t lastPocketTime;
+        PadStatus padStatus;
+        ProbeTracker* probeTracker=nullptr;
+        ControlValues dummyData;
+        bool first=true;
         bool resetLatch;
         bool stopLatch;
         bool firstLog;
