@@ -44,13 +44,29 @@ public:
         this->runTimes[pocket]=milliseconds(rt);
     }
 
+    long long GetElapsedMilli(){
+        return this->elapsed.count();
+    }
+
+    long long GetStartTime(){
+        auto t= std::chrono::time_point_cast<milliseconds>(this->startTime);
+        return t.time_since_epoch().count();
+    }
+
+    void SetStartTime(long long timeSinceEpoch){
+        milliseconds oldStart=milliseconds(timeSinceEpoch);
+        hr_time_point old(oldStart);
+        auto now=hr_clock::now();
+        this->startTime=now+(now-old);
+    }
+
 signals:
 
 public slots:
 
 private:
     hr_time_point lastUpdate,startTime,pauseTime;
-    milliseconds  elapsed;
+    milliseconds  elapsed,pausedDuration;
     milliseconds  runTimes[6]={milliseconds(0),milliseconds(0),
                                milliseconds(0),milliseconds(0),
                                milliseconds(0),milliseconds(0)};

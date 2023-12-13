@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),ui(new Ui::MainWin
 	this->logger=new Logger(this);
     this->database=new DatabaseLogger(this);
     this->probeTracker=new ProbeTracker(this,80,1.5);
-    //this->database->InitConnection();
+    this->database->InitConnection();
 	this->settingDialog=new ConfigSettingDialog();
     this->setupLedIndicators();
     this->setupTestInfo();
@@ -18,18 +18,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),ui(new Ui::MainWin
     this->resetLatch=false;
     this->stopLatch=false;
     this->startPressed=false;
-    this->timer=new QTimer(this);
-    /*this->dummyData.currentSP=150;
-    this->dummyData.runTime=25200;
-    this->dummyData.i11=150;
-    this->dummyData.i12=150;
-    this->dummyData.i21=150;
-    this->dummyData.i22=150;
-    this->dummyData.i31=150;
-    this->dummyData.i32=150;*/
 
 
-    //connect(this->timer,SIGNAL(timeout()),this,SLOT(timer_update()));
 	connect(this->arduino,&Arduino::criticalError,this,&MainWindow::recieveCriticalError);
 	connect(this->arduino,&Arduino::dataUpdate,this,&MainWindow::updateUI);
 	connect(this->arduino,&Arduino::comUpdate,this,&MainWindow::recieveComMessage);
@@ -40,8 +30,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),ui(new Ui::MainWin
     connect(this->database,&DatabaseLogger::databaseError,this,&MainWindow::recieveDatabaseError);
     emit this->ui->statusDisplay->setText("Idle");
 
-    /*this->timer->start(250);
-    this->probeTracker->StartTracking(this->dummyData);*/
 }
 
 void MainWindow::timer_update(){
@@ -126,6 +114,8 @@ void MainWindow::logRunningTest(){
     testLog.setValue("p4_rt",this->probeTracker->GetPocketRuntime(Pocket::p4));
     testLog.setValue("p5_rt",this->probeTracker->GetPocketRuntime(Pocket::p5));
     testLog.setValue("p6_rt",this->probeTracker->GetPocketRuntime(Pocket::p6));
+    testLog.setValue("startTime",this->probeTracker->GetStartTime());
+    testLog.setValue("elapsed",this->probeTracker->GetElapsedMilli());
     testLog.sync();
     time(&this->lastTestLogWrite);
 }
@@ -153,6 +143,8 @@ TestInfo MainWindow::checkRunningTest(){
     this->probeTracker->SetPocketRuntime(Pocket::p4,testLog.value("p4_rt",0).toLongLong());
     this->probeTracker->SetPocketRuntime(Pocket::p5,testLog.value("p5_rt",0).toLongLong());
     this->probeTracker->SetPocketRuntime(Pocket::p6,testLog.value("p6_rt",0).toLongLong());
+    this->probeTracker->SetStartTime(testLog.value("startTime",0).toLongLong());
+    this->probeTracker->SetStartTime(testLog.value("elapsed",0).toLongLong());
     return testInfo;
 }
 
@@ -359,8 +351,8 @@ void MainWindow::updateUI(const ControlValues &data){
     if(!data.paused){
         this->probeTracker->Update(data);
     }
-    //emit this->ui->elapsedTimeBox->setText(data.elapsedTime);
-
+    emit this->ui->elapsedTimeBox->setText(data.elapsedTime);
+    //emit this->ui->elapsedTimeBox->setText(this->probeTracker->GetElapsedString());
     emit this->ui->p1StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p1));
     emit this->ui->p2StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p2));
     emit this->ui->p3StatusLineEdit->setText(this->probeTracker->GetTimeString(Pocket::p3));

@@ -1,4 +1,5 @@
 #include "probetracker.h"
+#include <QtDebug>
 
 ProbeTracker::ProbeTracker(QObject *parent) : QObject(parent){
     this->currentPercent=0.80;
@@ -34,31 +35,37 @@ void ProbeTracker::StartTracking(const ControlValues& data){
 
 void ProbeTracker::PauseTracking(){
     this->testRunning=false;
+    this->pauseTime=hr_clock::now();
 }
 
 void ProbeTracker::ContinueTracking(){
     this->testRunning=true;
+    auto now=hr_clock::now();
+    auto dt=now-this->pauseTime;
+    this->startTime+=dt;
+    this->pausedDuration=duration_cast<milliseconds>(dt);
     this->lastUpdate=hr_clock::now();
 }
 
 void ProbeTracker::ContinueTracking(const ControlValues& data){
-    this->runTime=long(data.runTime)*1000;
-    this->currentSetPoint=data.currentSP;
-    this->minTime=this->runTime*this->timePercent;
-    this->minCurrent=this->currentSetPoint*this->currentPercent;
     this->testRunning=true;
     this->lastUpdate=hr_clock::now();
-
 }
 
 void ProbeTracker::Update(const ControlValues& data){
     if(this->testRunning){
+        this->currentSetPoint=data.currentSP;
+        this->runTime=long(data.runTime)*1000;
+        this->minTime=this->runTime*this->timePercent;
+        qDebug()<<"Min Current:"<<data.currentSP<<endl;
+        this->minCurrent=this->currentSetPoint*this->currentPercent;
         auto now=hr_clock::now();
         hr_duration t=now-this->startTime;
         this->elapsed=std::chrono::duration_cast<milliseconds>(t);
         auto padDuration=now-this->lastUpdate;
         milliseconds padDur=duration_cast<milliseconds>(padDuration);
         this->lastUpdate=now;
+
         if(data.i11>=this->minCurrent){
             this->runTimes[Pocket::p1]+=padDur;
         }
